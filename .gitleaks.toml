@@ -1,0 +1,38 @@
+# gitleaks configuration — SigSec
+#
+# ⚠️ Without [extend], a config file REPLACES gitleaks' built-in ruleset instead of
+# adding to it, which would silently turn the pre-commit gate into a no-op while it
+# still printed a reassuring "0 leaks found". useDefault keeps every stock rule.
+[extend]
+useDefault = true
+
+# The MCP tool-poisoning audit plants deliberately fake credentials — an SSH key, an
+# .env, AWS keys — in a canary directory, then checks whether an MCP server exfiltrates
+# them. Planted bait is the entire method, so the plan and its design doc necessarily
+# contain credential-shaped strings, and gitleaks correctly flags the SSH key block
+# (RuleID private-key, entropy 5.13) as a leak.
+#
+# Scoped to the canary MARKER, not to the file: any real key dropped into these docs is
+# still caught, because a real key will not carry the marker. The marker is present in
+# every canary payload by design — its whole purpose is to be recognisable in output if
+# the injection lands.
+[[allowlists]]
+description = "MCP tool-poisoning audit canaries — bait credentials, never live"
+regexTarget = "match"
+regexes = [
+  '''CANARY_MCP_AUDIT_2026''',
+  '''CANARY_NOT_REAL''',
+  '''canary_mcp_audit_2026''',
+]
+
+# The llmbait secret-scanner test is DEFINITIONALLY full of fake key-shaped fixtures
+# (sk-ant-TEST*, ghp_*, AKIA*, high-entropy example blobs) — they are the positive
+# controls that prove the scanner catches secrets. Scoped to this one file, not the
+# marker, because there is no single marker across the fixture families. Safe because
+# the file guards itself more tightly than gitleaks could: test_this_file_carries_only_
+# declared_needles scans it and FAILS on any undeclared (i.e. real) key pasted in.
+[[allowlists]]
+description = "llmbait secret-scanner test fixtures — guarded by its own declared-needles test"
+paths = [
+  '''honeypot/llmbait/test_no_hardcoded_secrets\.py''',
+]

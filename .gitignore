@@ -1,0 +1,12 @@
+# Terraform state carries account IDs + secrets — never commit
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+# CloudGoat local creds/output
+cloudgoat/
+*_cloudgoat_output.txt
+# env / creds
+.env
+*.pem
+credentials
