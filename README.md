@@ -22,6 +22,10 @@ credentials redacted.
 
 Write-ups follow [`TEMPLATE.md`](./TEMPLATE.md).
 
+## Write-ups
+
+- [IAM privilege escalation via tag-gated key rotation](./01-iam-privesc-key-rotation/) — a `manager` user escalates to `admin` and reads a secret by abusing an IAM permission keyed on a tag it can set itself (attack).
+
 ## Ethics & scope
 
 All exercises run against my own AWS and Azure accounts, under the
