@@ -25,6 +25,7 @@ Write-ups follow [`TEMPLATE.md`](./TEMPLATE.md).
 ## Write-ups
 
 - [IAM privilege escalation via tag-gated key rotation](./01-iam-privesc-key-rotation/) — a `manager` user escalates to `admin` and reads a secret by abusing an IAM permission keyed on a tag it can set itself (attack).
+- [IAM attack primitives](./02-iam-attack-primitives/) — three reusable IAM misconfigs (over-broad in-account trust, cross-account trust + the ExternalId fix, PassRole+Lambda pair) that seed the Phase-2 attacks (setup).
 
 ## Ethics & scope
 
