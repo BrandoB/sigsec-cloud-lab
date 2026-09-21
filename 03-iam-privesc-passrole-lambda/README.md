@@ -107,10 +107,56 @@ the over-broad trust grants.)
 
 ## Detection
 
-_(added in Phase 3)_ — CloudTrail: `lambda:CreateFunction` + `iam:PassRole` of a privileged
-role by `sigsec-lab-lowpriv`, followed by `InvokeFunction`, then an `iam:AttachUserPolicy`
-granting `AdministratorAccess` whose caller is the Lambda execution role (not a human
-principal). Also `sts:AssumeRole` to `sigsec-lab-overpriv` from a non-administrative principal.
+Detected with **CloudTrail → CloudWatch Logs metric filters + alarms** (Phase 3a, hand-rolled,
+$0). A multi-region trail with global events on delivers into one CloudWatch Logs group in the
+operating region; metric-filter patterns match the attack's own API calls and drive alarms. No
+data events are needed — every signal is a management event (perpetual-free). All three fired on
+a live re-run (each alarm → `ALARM`, confirmed by metric `Sum >= 1` and the alarm state
+transition; no SNS email subscription required).
+
+**1 — low-priv user creates a Lambda passing the high-priv role** (the PassRole+Lambda hinge):
+
+```
+{ ($.eventName = "CreateFunction20150331")
+  && ($.userIdentity.userName = "sigsec-lab-lowpriv")
+  && ($.requestParameters.role = "*sigsec-lab-lambda-exec") }
+```
+
+Two gotchas each cost a silent no-op if missed: the CloudTrail event name is **version-suffixed**
+(`CreateFunction20150331`, not `CreateFunction`), and **`iam:PassRole` emits no event of its own**
+— it is an authorization check, so the passed role appears only as `requestParameters.role`
+*inside* the `CreateFunction` record. A filter on `CreateFunction`, or on a `PassRole` event,
+never fires.
+
+**2 — AdministratorAccess attached by the Lambda execution role** (the escalation payload):
+
+```
+{ ($.eventName = "AttachUserPolicy")
+  && ($.requestParameters.policyArn = "arn:aws:iam::aws:policy/AdministratorAccess")
+  && ($.userIdentity.sessionContext.sessionIssuer.userName = "sigsec-lab-lambda-exec") }
+```
+
+The `sessionIssuer` clause is what separates the attack from benign administration — a
+legitimate operator granting `AdministratorAccess` carries a different issuer; without it the
+rule over-fires on normal admin activity (observed a benign attach during setup).
+
+**3 — any principal assumes the over-privileged role:**
+
+```
+{ ($.eventName = "AssumeRole")
+  && ($.requestParameters.roleArn = "*sigsec-lab-overpriv") }
+```
+
+Kept deliberately broad (all callers) and triaged on the caller, because the risk is *who*
+assumed it. The Lambda service's own assume of the exec role carries a different `roleArn` and is
+excluded.
+
+Wiring: metric filter → custom metric (`Sum`) → alarm (`>= 1` over 1 min,
+`treatMissingData = notBreaching`) → SNS. Note the CloudTrail→CloudWatch delivery lag (~5-15 min)
+— a check before then is a false miss, not a gap. The IAM `AttachUserPolicy` above is a *global*
+event; a multi-region trail still lands it in the single regional log group, so all three signals
+are visible from one place. Rules live as Terraform (`detections/`, account ID redacted). The
+managed-service comparison (GuardDuty / Security Hub) is a deliberate later step.
 
 ## Remediation
 
