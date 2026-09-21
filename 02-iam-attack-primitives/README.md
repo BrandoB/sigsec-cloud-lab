@@ -68,6 +68,11 @@ the hinge: without a resource constraint, the user can hand *any* passable role 
 own code. No access key is minted here, so it is inert until Phase 2 provisions
 credentials for `sigsec-lab-lowpriv`.
 
+> **Phase 2 realization:** the "higher-privileged role" this needs must be *Lambda-assumable*
+> — none of A/B is. Phase 2 adds that missing target as **misconfig D** (`sigsec-lab-lambda-exec`,
+> trusts `lambda.amazonaws.com`, `IAMFullAccess`) and runs the full chain in
+> [`03-iam-privesc-passrole-lambda`](../03-iam-privesc-passrole-lambda/).
+
 ## What the attacker gains
 
 A → PowerUser across the account from any in-account foothold. B (in the anti-pattern
