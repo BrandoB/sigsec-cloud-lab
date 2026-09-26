@@ -27,6 +27,7 @@ Write-ups follow [`TEMPLATE.md`](./TEMPLATE.md).
 - [IAM privilege escalation via tag-gated key rotation](./01-iam-privesc-key-rotation/) — a `manager` user escalates to `admin` and reads a secret by abusing an IAM permission keyed on a tag it can set itself (attack).
 - [IAM attack primitives](./02-iam-attack-primitives/) — three reusable IAM misconfigs (over-broad in-account trust, cross-account trust + the ExternalId fix, PassRole+Lambda pair) that seed the Phase-2 attacks (setup).
 - [IAM privilege escalation via PassRole + Lambda](./03-iam-privesc-passrole-lambda/) — a low-priv user with a PassRole+Lambda pair escalates to full admin by passing an over-scoped Lambda execution role; plus the over-broad in-account role's PowerUser blast radius and its `iam:*` ceiling (attack).
+- [Managed detection vs. the attacks: GuardDuty + Security Hub](./04-managed-detection-guardduty/) — point AWS managed detection at the same account: it deterministically catches Kali-host recon (`PenTest:IAMUser/KaliLinux`) but nulls on the clean PassRole→Lambda privesc a fresh detector's ML has no baseline for — custom CloudTrail rules catch what it misses, and vice-versa (detect).
 
 ## Ethics & scope
 
